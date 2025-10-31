@@ -13,8 +13,20 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            WebView(url: websiteURL)
-                .edgesIgnoringSafeArea(.all) // Extend the WebView to the screen edges
+            WebView(url: websiteURL) { action, data in
+                // Handle JavaScript messages here
+                print("Received JS message - Action: \(action), Data: \(data ?? "No data")")
+                
+                switch action {
+                case "ready":
+                    print("WebView loaded and ready!")
+                case "launchExternalDCF":
+                    print("LaunchExternalDCF triggered with data: \(data ?? "No data")")
+                default:
+                    print("Unknown action: \(action)")
+                }
+            }
+            .edgesIgnoringSafeArea(.all) // Extend the WebView to the screen edges
         }
     }
     
