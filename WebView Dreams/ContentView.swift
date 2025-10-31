@@ -6,17 +6,19 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct ContentView: View {
+    let websiteURL = URL(string: "https://maxwellbenton.github.io/test-merchant/")!
+
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            WebView(url: websiteURL)
+                .edgesIgnoringSafeArea(.all) // Extend the WebView to the screen edges
         }
-        .padding()
     }
+    
+    
 }
 
 #Preview {

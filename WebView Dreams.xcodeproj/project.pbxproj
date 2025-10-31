@@ -14,6 +14,7 @@
 		F95203922E6C935D0067D88E /* WebView_DreamsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F95203912E6C935D0067D88E /* WebView_DreamsTests.swift */; };
 		F952039C2E6C935D0067D88E /* WebView_DreamsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F952039B2E6C935D0067D88E /* WebView_DreamsUITests.swift */; };
 		F952039E2E6C935D0067D88E /* WebView_DreamsUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F952039D2E6C935D0067D88E /* WebView_DreamsUITestsLaunchTests.swift */; };
+		F95203AB2E6C96A10067D88E /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F95203AA2E6C96A10067D88E /* WebView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +45,7 @@
 		F95203972E6C935D0067D88E /* WebView DreamsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "WebView DreamsUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F952039B2E6C935D0067D88E /* WebView_DreamsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView_DreamsUITests.swift; sourceTree = "<group>"; };
 		F952039D2E6C935D0067D88E /* WebView_DreamsUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView_DreamsUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		F95203AA2E6C96A10067D88E /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +98,7 @@
 			children = (
 				F95203802E6C935C0067D88E /* WebView_DreamsApp.swift */,
 				F95203822E6C935C0067D88E /* ContentView.swift */,
+				F95203AA2E6C96A10067D88E /* WebView.swift */,
 				F95203842E6C935D0067D88E /* Assets.xcassets */,
 				F95203862E6C935D0067D88E /* Preview Content */,
 			);
@@ -257,6 +260,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F95203AB2E6C96A10067D88E /* WebView.swift in Sources */,
 				F95203832E6C935C0067D88E /* ContentView.swift in Sources */,
 				F95203812E6C935C0067D88E /* WebView_DreamsApp.swift in Sources */,
 			);
