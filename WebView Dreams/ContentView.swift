@@ -11,6 +11,7 @@ import WebKit
 struct ContentView: View {
     let websiteURL = URL(string: "https://maxwellbenton.github.io/ios-mock-merchant/")!
     let fallbackURL = URL(string: "https://www.google.com")!
+    let testURL = URL(string: "https://pages.github.com")!
 
     var body: some View {
         VStack {
