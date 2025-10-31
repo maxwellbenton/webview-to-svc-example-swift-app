@@ -9,7 +9,7 @@ import SwiftUI
 import WebKit
 
 struct ContentView: View {
-    let websiteURL = URL(string: "https://maxwellbenton.github.io/test-merchant/")!
+    let websiteURL = URL(string: "http://127.0.0.1:8080")!
 
     var body: some View {
         VStack {
