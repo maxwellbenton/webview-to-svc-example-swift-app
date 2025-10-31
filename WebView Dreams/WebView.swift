@@ -91,12 +91,24 @@ struct WebView: UIViewRepresentable {
         }
         
         private func handleLaunchExternalDCF(data: Any?) {
-            guard let dataDict = data as? [String: Any],
-                  let redirectURLString = dataDict["redirectURL"] as? String,
-                  let redirectURL = URL(string: redirectURLString) else {
-                print("Invalid data for launchExternalDCF action")
+            print("handleLaunchExternalDCF called with data: \(data ?? "nil")")
+            
+            guard let dataDict = data as? [String: Any] else {
+                print("Error: data is not a dictionary. Type: \(type(of: data))")
                 return
             }
+            
+            guard let redirectURLString = dataDict["redirectURL"] as? String else {
+                print("Error: redirectURL not found or not a string. Available keys: \(dataDict.keys)")
+                return
+            }
+            
+            guard let redirectURL = URL(string: redirectURLString) else {
+                print("Error: Invalid URL string: \(redirectURLString)")
+                return
+            }
+            
+            print("Valid URL found: \(redirectURL). Dispatching to main thread...")
             
             DispatchQueue.main.async {
                 self.presentSafariViewController(url: redirectURL)
@@ -104,12 +116,25 @@ struct WebView: UIViewRepresentable {
         }
         
         private func presentSafariViewController(url: URL) {
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let window = windowScene.windows.first,
-                  let rootViewController = window.rootViewController else {
+            print("Attempting to present Safari VC for URL: \(url)")
+            
+            // Try multiple approaches to find the right view controller
+            guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else {
+                print("Could not find active window scene")
+                return
+            }
+            
+            guard let window = windowScene.windows.first(where: \.isKeyWindow) ?? windowScene.windows.first else {
+                print("Could not find key window")
+                return
+            }
+            
+            guard let rootViewController = window.rootViewController else {
                 print("Could not find root view controller")
                 return
             }
+            
+            print("Found root view controller: \(type(of: rootViewController))")
             
             let safariVC = SFSafariViewController(url: url)
             safariVC.modalPresentationStyle = .fullScreen
@@ -118,9 +143,14 @@ struct WebView: UIViewRepresentable {
             var topViewController = rootViewController
             while let presentedVC = topViewController.presentedViewController {
                 topViewController = presentedVC
+                print("Found presented VC: \(type(of: presentedVC))")
             }
             
-            topViewController.present(safariVC, animated: true, completion: nil)
+            print("Will present Safari VC on: \(type(of: topViewController))")
+            
+            topViewController.present(safariVC, animated: true) {
+                print("Safari VC presented successfully")
+            }
         }
         
         // Navigation delegate methods for additional control
