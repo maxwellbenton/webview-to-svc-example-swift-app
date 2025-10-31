@@ -46,7 +46,16 @@ struct WebView: UIViewRepresentable {
         // Set custom user agent to help with compatibility
         wkWebView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
         
-        let request = URLRequest(url: url)
+        // Create a more robust request with custom headers
+        var request = URLRequest(url: url)
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+        request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        request.timeoutInterval = 30.0
+        
+        print("🌐 Loading URL: \(url.absoluteString)")
+        print("🔒 URL Scheme: \(url.scheme ?? "No scheme")")
+        print("🏠 URL Host: \(url.host ?? "No host")")
+        
         wkWebView.load(request)
         return wkWebView
     }
@@ -194,16 +203,35 @@ struct WebView: UIViewRepresentable {
                 print("🔍 Issue: ATS blocking connection - check Info.plist settings")
             case NSURLErrorServerCertificateUntrusted:
                 print("🔍 Issue: SSL certificate issue")
+            case NSURLErrorSecureConnectionFailed, -1200:
+                print("🔍 Issue: TLS/SSL secure connection failed - certificate or cipher suite issue")
+                print("💡 This Mac may have stricter TLS requirements")
             case NSURLErrorCancelled:
                 print("🔍 Issue: Request was cancelled")
             default:
                 print("🔍 Issue: Other network error (\(nsError.code))")
             }
             
-            // Try to reload with a delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                print("🔄 Attempting to reload...")
-                webView.reload()
+            // For TLS errors, try fallback strategies
+            if nsError.code == -1200 || nsError.code == NSURLErrorSecureConnectionFailed {
+                print("🔄 TLS failed, trying fallback strategies...")
+                
+                // Try reloading with a different approach
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    if let originalURL = webView.url ?? URL(string: "https://maxwellbenton.github.io/ios-mock-merchant/") {
+                        print("🔄 Attempting reload with fresh request...")
+                        var newRequest = URLRequest(url: originalURL)
+                        newRequest.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+                        newRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
+                        webView.load(newRequest)
+                    }
+                }
+            } else {
+                // For other errors, just try a simple reload
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    print("🔄 Attempting to reload...")
+                    webView.reload()
+                }
             }
         }
         

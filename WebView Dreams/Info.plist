@@ -6,6 +6,29 @@
 	<dict>
 		<key>NSExceptionRequiresForwardSecrecy</key>
 		<false/>
+		<key>NSExceptionMinimumTLSVersion</key>
+		<string>TLSv1.0</string>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>maxwellbenton.github.io</key>
+			<dict>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>github.io</key>
+			<dict>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
 </dict>
 </plist>
