@@ -20,6 +20,11 @@ struct WebView: UIViewRepresentable {
         configuration.mediaTypesRequiringUserActionForPlayback = []
         configuration.suppressesIncrementalRendering = false
         
+        // Disable haptic feedback to prevent hapticpatternlibrary.plist errors
+        if #available(iOS 13.0, *) {
+            configuration.preferences.isFraudulentWebsiteWarningEnabled = false
+        }
+        
         // Add script message handler for JavaScript bridge
         contentController.add(context.coordinator, name: "iosMessageHandler")
         

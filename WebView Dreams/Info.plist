@@ -6,6 +6,12 @@
 	<dict>
 		<key>NSExceptionRequiresForwardSecrecy</key>
 		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 	</dict>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
 </dict>
 </plist>
