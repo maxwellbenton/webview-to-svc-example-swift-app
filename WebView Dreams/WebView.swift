@@ -15,6 +15,11 @@ struct WebView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         let contentController = WKUserContentController()
         
+        // Enhanced configuration for better compatibility
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        configuration.suppressesIncrementalRendering = false
+        
         // Add script message handler for JavaScript bridge
         contentController.add(context.coordinator, name: "iosMessageHandler")
         
@@ -33,6 +38,13 @@ struct WebView: UIViewRepresentable {
         
         let wkWebView = WKWebView(frame: .zero, configuration: configuration)
         wkWebView.navigationDelegate = context.coordinator
+        
+        // Additional WebView settings for better compatibility
+        wkWebView.allowsBackForwardNavigationGestures = true
+        wkWebView.allowsLinkPreview = true
+        
+        // Set custom user agent to help with compatibility
+        wkWebView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
         
         let request = URLRequest(url: url)
         wkWebView.load(request)
@@ -160,6 +172,50 @@ struct WebView: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             print("Finished loading: \(webView.url?.absoluteString ?? "")")
+        }
+        
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            print("❌ PROVISIONAL LOAD FAILED")
+            print("URL: \(webView.url?.absoluteString ?? "No URL")")
+            print("Error: \(error.localizedDescription)")
+            print("Error Code: \((error as NSError).code)")
+            print("Error Domain: \((error as NSError).domain)")
+            
+            // Check for specific error types
+            let nsError = error as NSError
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet:
+                print("🔍 Issue: No internet connection")
+            case NSURLErrorCannotConnectToHost:
+                print("🔍 Issue: Cannot connect to host - check network/firewall")
+            case NSURLErrorTimedOut:
+                print("🔍 Issue: Request timed out")
+            case NSURLErrorAppTransportSecurityRequiresSecureConnection:
+                print("🔍 Issue: ATS blocking connection - check Info.plist settings")
+            case NSURLErrorServerCertificateUntrusted:
+                print("🔍 Issue: SSL certificate issue")
+            case NSURLErrorCancelled:
+                print("🔍 Issue: Request was cancelled")
+            default:
+                print("🔍 Issue: Other network error (\(nsError.code))")
+            }
+            
+            // Try to reload with a delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                print("🔄 Attempting to reload...")
+                webView.reload()
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            print("❌ NAVIGATION FAILED")
+            print("URL: \(webView.url?.absoluteString ?? "No URL")")
+            print("Error: \(error.localizedDescription)")
+        }
+        
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            print("🔍 Navigation policy check for: \(navigationAction.request.url?.absoluteString ?? "No URL")")
+            decisionHandler(.allow)
         }
     }
 }

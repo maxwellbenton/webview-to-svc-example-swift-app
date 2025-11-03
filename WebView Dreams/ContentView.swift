@@ -10,6 +10,7 @@ import WebKit
 
 struct ContentView: View {
     let websiteURL = URL(string: "http://127.0.0.1:8080")!
+    let fallbackURL = URL(string: "https://www.google.com")!
 
     var body: some View {
         VStack {
