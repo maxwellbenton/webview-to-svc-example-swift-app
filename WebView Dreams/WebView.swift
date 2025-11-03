@@ -38,25 +38,16 @@ struct WebView: UIViewRepresentable {
         
         // Optional: Add any JavaScript you want to inject
         let jsCode = """
-            // Disable haptic feedback and vibration APIs
-            if ('vibrate' in navigator) {
-                navigator.vibrate = function() { return false; };
-            }
-            
-            // Disable touch feedback events that might trigger haptics
-            document.addEventListener('touchstart', function(e) {
-                e.stopPropagation();
-            }, true);
-            
-            // Override any haptic feedback APIs
-            if (window.DeviceMotionEvent) {
-                window.DeviceMotionEvent = undefined;
-            }
-            
+            // Send ready message when WebView loads
             window.webkit.messageHandlers.iosMessageHandler.postMessage({
                 action: 'ready',
                 data: 'WebView loaded successfully'
             });
+            
+            // Disable haptic feedback and vibration APIs to reduce errors
+            if ('vibrate' in navigator) {
+                navigator.vibrate = function() { return false; };
+            }
         """
         
         let userScript = WKUserScript(source: jsCode, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
@@ -124,37 +115,26 @@ struct WebView: UIViewRepresentable {
         private func handleJavaScriptMessage(action: String, data: Any?) {
             switch action {
             case "ready":
-                print("WebView ready: \(data ?? "No data")")
+                // WebView is ready - minimal logging
+                break
             case "log":
                 if let logMessage = data as? String {
-                    print("JS Log: \(logMessage)")
+                    print("JS: \(logMessage)")
                 }
             case "launchExternalDCF":
                 handleLaunchExternalDCF(data: data)
             default:
-                print("Received JS message - Action: \(action), Data: \(data ?? "No data")")
+                print("JS Action: \(action)")
             }
         }
         
         private func handleLaunchExternalDCF(data: Any?) {
-            print("handleLaunchExternalDCF called with data: \(data ?? "nil")")
-            
-            guard let dataDict = data as? [String: Any] else {
-                print("Error: data is not a dictionary. Type: \(type(of: data))")
+            guard let dataDict = data as? [String: Any],
+                  let redirectURLString = dataDict["redirectURL"] as? String,
+                  let redirectURL = URL(string: redirectURLString) else {
+                print("Invalid launchExternalDCF data")
                 return
             }
-            
-            guard let redirectURLString = dataDict["redirectURL"] as? String else {
-                print("Error: redirectURL not found or not a string. Available keys: \(dataDict.keys)")
-                return
-            }
-            
-            guard let redirectURL = URL(string: redirectURLString) else {
-                print("Error: Invalid URL string: \(redirectURLString)")
-                return
-            }
-            
-            print("Valid URL found: \(redirectURL). Dispatching to main thread...")
             
             DispatchQueue.main.async {
                 self.presentSafariViewController(url: redirectURL)
@@ -162,25 +142,11 @@ struct WebView: UIViewRepresentable {
         }
         
         private func presentSafariViewController(url: URL) {
-            print("Attempting to present Safari VC for URL: \(url)")
-            
-            // Try multiple approaches to find the right view controller
-            guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else {
-                print("Could not find active window scene")
+            guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+                  let window = windowScene.windows.first(where: \.isKeyWindow) ?? windowScene.windows.first,
+                  let rootViewController = window.rootViewController else {
                 return
             }
-            
-            guard let window = windowScene.windows.first(where: \.isKeyWindow) ?? windowScene.windows.first else {
-                print("Could not find key window")
-                return
-            }
-            
-            guard let rootViewController = window.rootViewController else {
-                print("Could not find root view controller")
-                return
-            }
-            
-            print("Found root view controller: \(type(of: rootViewController))")
             
             let safariVC = SFSafariViewController(url: url)
             safariVC.modalPresentationStyle = .fullScreen
@@ -189,66 +155,20 @@ struct WebView: UIViewRepresentable {
             var topViewController = rootViewController
             while let presentedVC = topViewController.presentedViewController {
                 topViewController = presentedVC
-                print("Found presented VC: \(type(of: presentedVC))")
             }
             
-            print("Will present Safari VC on: \(type(of: topViewController))")
-            
-            topViewController.present(safariVC, animated: true) {
-                print("Safari VC presented successfully")
-            }
+            topViewController.present(safariVC, animated: true)
         }
         
-        // Navigation delegate methods for additional control
-        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            print("Started loading: \(webView.url?.absoluteString ?? "")")
-        }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            print("Finished loading: \(webView.url?.absoluteString ?? "")")
-        }
-        
+        // Navigation delegate methods
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-            print("❌ PROVISIONAL LOAD FAILED")
-            print("URL: \(webView.url?.absoluteString ?? "No URL")")
-            print("Error: \(error.localizedDescription)")
-            print("Error Code: \((error as NSError).code)")
-            print("Error Domain: \((error as NSError).domain)")
-            
-            // Check for specific error types
             let nsError = error as NSError
-            switch nsError.code {
-            case NSURLErrorNotConnectedToInternet:
-                print("🔍 Issue: No internet connection")
-            case NSURLErrorCannotConnectToHost:
-                print("🔍 Issue: Cannot connect to host - check network/firewall")
-            case NSURLErrorTimedOut:
-                print("🔍 Issue: Request timed out")
-            case NSURLErrorAppTransportSecurityRequiresSecureConnection:
-                print("🔍 Issue: ATS blocking connection - check Info.plist settings")
-            case NSURLErrorServerCertificateUntrusted:
-                print("🔍 Issue: SSL certificate issue")
-            case NSURLErrorCancelled:
-                print("🔍 Issue: Request was cancelled")
-            default:
-                print("🔍 Issue: Other network error (\(nsError.code))")
+            if nsError.code != NSURLErrorCancelled {
+                print("Load failed: \(error.localizedDescription)")
             }
-            
-            // Try to reload with a delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                print("🔄 Attempting to reload...")
-                webView.reload()
-            }
-        }
-        
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            print("❌ NAVIGATION FAILED")
-            print("URL: \(webView.url?.absoluteString ?? "No URL")")
-            print("Error: \(error.localizedDescription)")
         }
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            print("🔍 Navigation policy check for: \(navigationAction.request.url?.absoluteString ?? "No URL")")
             decisionHandler(.allow)
         }
     }
