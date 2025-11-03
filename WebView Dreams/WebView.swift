@@ -20,9 +20,17 @@ struct WebView: UIViewRepresentable {
         configuration.mediaTypesRequiringUserActionForPlayback = []
         configuration.suppressesIncrementalRendering = false
         
-        // Disable haptic feedback to prevent hapticpatternlibrary.plist errors
-        if #available(iOS 13.0, *) {
-            configuration.preferences.isFraudulentWebsiteWarningEnabled = false
+        // Disable haptic feedback and related features to prevent hapticpatternlibrary.plist errors
+        configuration.preferences.isFraudulentWebsiteWarningEnabled = false
+        configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+        
+        // Disable additional features that might trigger haptics
+        configuration.allowsAirPlayForMediaPlayback = false
+        configuration.allowsPictureInPictureMediaPlayback = false
+        
+        // Additional iOS 14+ settings
+        if #available(iOS 14.0, *) {
+            configuration.limitsNavigationsToAppBoundDomains = false
         }
         
         // Add script message handler for JavaScript bridge
@@ -30,6 +38,21 @@ struct WebView: UIViewRepresentable {
         
         // Optional: Add any JavaScript you want to inject
         let jsCode = """
+            // Disable haptic feedback and vibration APIs
+            if ('vibrate' in navigator) {
+                navigator.vibrate = function() { return false; };
+            }
+            
+            // Disable touch feedback events that might trigger haptics
+            document.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+            }, true);
+            
+            // Override any haptic feedback APIs
+            if (window.DeviceMotionEvent) {
+                window.DeviceMotionEvent = undefined;
+            }
+            
             window.webkit.messageHandlers.iosMessageHandler.postMessage({
                 action: 'ready',
                 data: 'WebView loaded successfully'
@@ -45,8 +68,14 @@ struct WebView: UIViewRepresentable {
         wkWebView.navigationDelegate = context.coordinator
         
         // Additional WebView settings for better compatibility
-        wkWebView.allowsBackForwardNavigationGestures = true
-        wkWebView.allowsLinkPreview = true
+        wkWebView.allowsBackForwardNavigationGestures = false  // Disable to prevent haptic feedback
+        wkWebView.allowsLinkPreview = false  // Disable to prevent haptic feedback
+        
+        // Disable scroll view features that might trigger haptics
+        wkWebView.scrollView.isScrollEnabled = true
+        wkWebView.scrollView.bounces = false
+        wkWebView.scrollView.showsVerticalScrollIndicator = false
+        wkWebView.scrollView.showsHorizontalScrollIndicator = false
         
         // Set custom user agent to help with compatibility
         wkWebView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
