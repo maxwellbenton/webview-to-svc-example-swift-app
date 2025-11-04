@@ -4,10 +4,12 @@ import SafariServices
 
 struct WebView: UIViewRepresentable {
     let url: URL
+    let reloadTrigger: Bool
     let onJavaScriptMessage: ((String, Any?) -> Void)?
     
-    init(url: URL, onJavaScriptMessage: ((String, Any?) -> Void)? = nil) {
+    init(url: URL, reloadTrigger: Bool = false, onJavaScriptMessage: ((String, Any?) -> Void)? = nil) {
         self.url = url
+        self.reloadTrigger = reloadTrigger
         self.onJavaScriptMessage = onJavaScriptMessage
     }
 
@@ -77,10 +79,12 @@ struct WebView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        // You can add logic here to update the WKWebView if needed,
-        // for example, if the URL changes.
-        if uiView.url != url {
-            let request = URLRequest(url: url)
+        // Reload when the trigger changes or URL changes
+        if uiView.url != url || context.coordinator.lastReloadTrigger != reloadTrigger {
+            context.coordinator.lastReloadTrigger = reloadTrigger
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
             uiView.load(request)
         }
     }
@@ -91,6 +95,7 @@ struct WebView: UIViewRepresentable {
     
     class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         var parent: WebView
+        var lastReloadTrigger: Bool = false
         
         init(_ parent: WebView) {
             self.parent = parent
